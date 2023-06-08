@@ -1,252 +1,203 @@
--- Creacion de la base de datos
+create database defensa_hito4_2023;
 
-create database DefensaH4;
-use DefensaH4;
-
--- Creacion de las tablas solicitdas
+use defensa_hito4_2023;
 
 create table departamento(
-    id_dep int auto_increment primary key not null ,
-    nombre varchar(50) not null
+                             id_dep int primary key,
+                             nombre varchar(50)
 );
 
 create table provincia(
-    id_prov int auto_increment primary key not null ,
-    nombre varchar(50) not null,
-    id_dep int not null ,
-    foreign key (id_dep) references departamento(id_dep)
+                          id_prov int primary key,
+                          nombre varchar(50),
+                          id_dep int not null ,
+                          foreign key (id_dep) references departamento(id_dep)
 );
 
 create table persona(
-    id_per int auto_increment primary key not null ,
-    nombre varchar(20)not null ,
-    apellidos varchar(50) not null ,
-    fecha_nac date not null ,
-    edad int not null ,
-    email varchar(50) not null ,
-    id_dep int not null ,
-    id_pov int not null ,
-    foreign key (id_dep) references departamento (id_dep),
-    foreign key (id_pov) references provincia (id_prov),
-    sexo char not null
+                        id_per int primary key,
+                        nombre varchar(20),
+                        apellidos varchar(50),
+                        fecha_nac date ,
+                        edad int  ,
+                        email varchar(50) ,
+                        id_dep int ,
+                        id_pov int ,
+                        foreign key (id_dep) references departamento (id_dep),
+                        foreign key (id_pov) references provincia (id_prov),
+                        sexo char not null
 );
 
 create table proyecto(
-    id_proy int auto_increment primary key not null ,
-    nombreProy varchar(100) not null ,
-    tipoProy varchar(30)not null
+                         id_proy int primary key ,
+                         nombreProy varchar(100) ,
+                         tipoProy varchar(30)
 );
 
 create table detalle_proyecto(
-    id_dp int auto_increment primary key not null ,
-    id_per int not null ,
-    id_proy int not null ,
-    foreign key (id_per) references persona (id_per),
-    foreign key (id_proy) references proyecto (id_proy)
+                                 id_dp int primary key  ,
+                                 id_per int  ,
+                                 id_proy int  ,
+                                 foreign key (id_per) references persona (id_per),
+                                 foreign key (id_proy) references proyecto (id_proy)
 );
 
--- Insercion de registros en las tablas
+insert into departamento(id_dep, nombre)
+values (1,'La Paz'),
+       (2,'Santa Cruz');
 
-insert into departamento (nombre)
-values ('La Paz'),
-       ('Cochabamba');
+insert into provincia(id_prov, nombre, id_dep)
+values (1,'Yungas',1),
+       (2,'Chiquitos',2);
 
-insert into provincia (nombre, id_dep)
-values ('Yungas',1),
-       ('Quillacollo',2);
+insert into persona(id_per, nombre, apellidos, fecha_nac, edad, email, id_dep, id_pov, sexo)
+values (1,'Pepe','Mamani','2000-09-03',23,'pepe@gmail.com',1,1,'M'),
+       (2,'Maria','Torrez','2003-04-19',20,'maria@gmail.com',2,2,'F');
 
-insert into persona (nombre, apellidos, fecha_nac, edad, email, id_dep, id_pov, sexo)
-values ('Juan', 'García', '1990-05-10', 33, 'juan.garcia@example.com', 1, 1, 'M'),
-       ('María', 'López', '1985-12-15', 38, 'maria.lopez@example.com', 2, 2, 'F');
+insert into proyecto(id_proy, nombreProy, tipoProy)
+values (1,'Construccion Punete','Construccion'),
+       (3,'Replantacion de arboles','Forestacion');
 
-insert into proyecto (nombreProy, tipoProy)
-values ('Proyecto de Marketing', 'Publicidad'),
-       ('Proyecto de Desarrollo', 'Tecnología');
+insert into detalle_proyecto(id_dp, id_per, id_proy)
+values (1,1,1),
+       (2,2,2);
 
-insert into detalle_proyecto (id_per, id_proy)
-values (1,1),
-       (2,2);
+create table audit_proyectos (
+    id_audit int auto_increment primary key not null ,
+    nombre_proy_anterior varchar(30),
+    nombre_proy_posterior varchar(30),
+    tipo_proy_anterior varchar(30),
+    tipo_proy_posterior varchar(30),
+    operation varchar(30),
+    userid varchar(30),
+    hostname varchar(30),
+    fecha varchar(30)
+);
 
--- Crear una función que sume los valores de la serie Fibonacc
 
--- Creacion de la serie fibonacci
 
-create or replace function  serie_fibonacci(num int)
-    returns text
-begin
-    declare a int default 0;
-    declare b int default 1;
-    declare resp text default '';
-
-    while num>0 do
-            set resp = concat(resp,a,',');
-            set b = a + b;
-            set a = b - a;
-            set num = num - 1;
-        end while;
-    return resp;
-end;
-
-select serie_fibonacci(7);
-
--- creacion de la suma de la serie fibonacci
-
-create or replace function  suma_serie_fibonacci(Limite int)
-    returns int
-begin
-    declare resp int default 0;
-    declare cont int default 1;
-    declare aux char default '';
-    declare num int default 0;
-    declare fibonacci text;
-    set fibonacci = serie_fibinacci(Limite);
-
-    while (cont <= length(fibonacci)) do
-            set aux = substr(fibonacci, cont, 1);
-            if (aux not in (','))then
-                set num = cast(aux as unsigned);
-                set resp = resp + num;
-            end if;
-            set cont = cont + 1;
-        end while;
-
-    return resp;
-end;
-
-select suma_serie_fibonacci(7);
-
--- Manejo de vistas
-
--- creacion de la consulta
-
-select concat(pe.nombre,' ',pe.apellidos) as fullname,pe.edad,pe.fecha_nac,pro.nombreProy
-from persona as pe
-    inner join detalle_proyecto det on pe.id_per = det.id_per
-    inner join proyecto pro on det.id_proy = pro.id_proy
-    inner join departamento dep on pe.id_dep = dep.id_dep
-where pe.sexo = 'F' and dep.nombre = 'El Alto' and pe.fecha_nac = '2000-10-10';
-
--- Crecion de la vista
-
-create or replace view DatosPersonales as
-select concat(pe.nombre,' ',pe.apellidos) as fullname,pe.edad,pe.fecha_nac,pro.nombreProy
-from persona as pe
-         inner join detalle_proyecto det on pe.id_per = det.id_per
-         inner join proyecto pro on det.id_proy = pro.id_proy
-         inner join departamento dep on pe.id_dep = dep.id_dep
-where pe.sexo = 'F' and dep.nombre = 'El Alto' and pe.fecha_nac = '2000-10-10';
-
-select *
-from datospersonales as date;
-
--- creacion de la nueva columna de la tabla proyecto
-
-alter table proyecto
-add column (estado text);
-
--- creacion de triguer para INSERT
-
-create or replace trigger tr_insert
-    before insert
+create or replace trigger tr_audit_insert_proyecto
+    after insert
     on proyecto
     for each row
 begin
-    if NEW.tipoProy in ('EDUCACION','FORESTACION','CULTURA') then
-        set NEW.estado = 'ACTIVO';
-    else
-        set NEW.estado = 'INACTIVO';
-    end if;
+    insert into audit_proyectos(nombre_proy_anterior, nombre_proy_posterior, tipo_proy_anterior, tipo_proy_posterior, operation, userid, hostname, fecha)
+        select 'No hay dato anterior',NEW.nombreProy,'No hay dato anterior',NEW.tipoProy,'INSERT',user(),@@hostname,now();
 end;
 
--- creacion de triguer para UPDATE
 
-create or replace trigger tr_update
+create or replace trigger tr_audit_update_proyecto
     before update
     on proyecto
     for each row
 begin
-    if NEW.tipoProy in ('EDUCACION','FORESTACION','CULTURA') then
-        set NEW.estado = 'ACTIVO';
-    else
-        set NEW.estado = 'INACTIVO';
+    insert into audit_proyectos(nombre_proy_anterior, nombre_proy_posterior, tipo_proy_anterior, tipo_proy_posterior, operation, userid, hostname, fecha)
+    select OLD.nombreProy,NEW.nombreProy,OLD.tipoProy,NEW.tipoProy,'UPDATE',user(),@@hostname,now();
+end;
+
+
+create or replace trigger tr_audit_delete_proyecto
+    after delete
+    on proyecto
+    for each row
+begin
+    insert into audit_proyectos(nombre_proy_anterior, nombre_proy_posterior, tipo_proy_anterior, tipo_proy_posterior, operation, userid, hostname, fecha)
+    select OLD.nombreProy,'No hay dato posterior',OLD.tipoProy,'No hay dato posterior','DELETE',user(),@@hostname,now();
+end;
+
+
+insert into proyecto (id_proy, nombreProy, tipoProy)
+values (1,'Construccion de represa','CIVIL');
+
+delete from proyecto
+where id_proy = 1;
+
+insert into proyecto (id_proy, nombreProy, tipoProy)
+values (2,'Plantacion de arboles','PROYECTO');
+
+update proyecto set nombreProy = 'Construccion' where id_proy = 2;
+
+select *
+from proyecto;
+
+select *
+from audit_proyectos;
+
+
+select concat(pe.nombre,' ',pe.apellidos) as fullname,pe.edad,pe.fecha_nac,pro.nombreProy
+from persona as pe
+         inner join detalle_proyecto det on pe.id_per = det.id_per
+         inner join proyecto pro on det.id_proy = pro.id_proy
+         inner join departamento dep on pe.id_dep = dep.id_dep;
+
+create or replace view reporte_proyectos as
+    select concat(pe.nombre,' ',pe.apellidos)as fullname,
+           concat(pro.nombreProy,' ',pro.tipoProy) as desc_proyecto,
+           concat(dep.nombre) departamento ,
+           concat(
+
+               case
+                   when dep.nombre = 'La Paz' then 'LPZ'
+                   when dep.nombre = 'Cochabamba' then 'CBB'
+                   when dep.nombre = 'El Alto' then 'EAT'
+                   else 'No esta disponible'
+                   END
+               )as codigo_dep
+    from  persona as pe
+              inner join detalle_proyecto det on pe.id_per = det.id_per
+              inner join proyecto pro on det.id_proy = pro.id_proy
+              inner join departamento dep on pe.id_dep = dep.id_dep;
+
+
+select *
+from reporte_proyectos;
+
+create or replace trigger tr_valicdacion
+    before  insert
+    on proyecto
+    for each row
+begin
+    declare dia_de_la_semana text default '';
+    declare mes text default '';
+    set dia_de_la_semana =  dayname(current_date);
+    set  mes = monthname(current_date);
+
+
+    if NEW.tipoProy in ('Forestacion') and dia_de_la_semana ='Wednesday' and mes = 'JUNE'
+
+           then
+                 signal sqlstate '45000'
+                set message_text ='Proyecto no disponible en este momento';
+
     end if;
 end;
 
-insert into proyecto (nombreProy, tipoProy)
-values ('Talacion de arboles','EUDUCACION');
+insert into proyecto(id_proy, nombreProy, tipoProy)
+values (9,'Forestacion de arboles','Forestacion');
 
-insert into proyecto (nombreProy, tipoProy)
-values ('Construccion de puentes','CIVIL');
-
-select *
-from proyecto;
-
-update proyecto set tipoProy = 'CULTURA' where id_proy = 2;
+insert into proyecto(id_proy, nombreProy, tipoProy)
+values (10,'Construccion Hospital','Construccion');
 
 select *
 from proyecto;
 
--- calcular edad mediante un triguer
 
-create or replace trigger tr_calculaEdad
-    before insert
-    on persona
-    for each row
-begin
-    declare edad int default timestampdiff(YEAR, New.fecha_nac,curdate());
-
-    set NEW.edad = edad;
-
+create or replace function DiccionarioDias(dia text)
+    returns TEXT
+BEGIN
+    declare resp text default '';
+    case
+        when dia = 'MONDAY' then set resp = 'LUNES';
+        when dia = 'TSUEDAY' then set resp = 'MARTES';
+        when dia = 'WENDNESDAY' then set resp = 'MIERCOLES';
+        when dia = 'THURSDAY' then set resp = 'JUEVES';
+        when dia = 'FRIDAY' then set resp ='VIERNES';
+        when dia = 'SATURDAY' then set resp = 'SABADO';
+        when dia = 'SUNDAY' then set resp = 'DOMINGO';
+    else
+        set resp = 'NO esta en el diccionario';
+    end case ;
+    return resp;
 end;
 
-insert into persona (nombre, apellidos, fecha_nac, edad, email, id_dep, id_pov, sexo)
-values ('Nilber','Mayta','2003-08-18',1,'nilber@gmail.com',1,1,'M');
-
-select *
-from persona;
-
-create table copia_persona(
-        nombre varchar(20)not null ,
-        apellidos varchar(50) not null ,
-        fecha_nac date not null ,
-        edad int not null ,
-        email varchar(50) not null ,
-        id_dep int not null ,
-        id_pov int not null ,
-        sexo char not null
-);
-
-create or replace trigger tr_CopiaPersona
-    before insert
-    on persona
-    for each row
-begin
-    insert into copia_persona(nombre, apellidos, fecha_nac, edad, email, id_dep, id_pov, sexo)
-        select NEW.nombre,NEW.apellidos,NEW.fecha_nac,NEW.edad,NEW.email,new.id_dep,NEW.id_pov,NEW.sexo;
-end;
-
-
-insert into persona(nombre, apellidos, fecha_nac, edad, email, id_dep, id_pov, sexo)
-values ('Luis','MAMANI','2004-05-12',18,'juan@gmail.com',2,2,'M');
-
-select *
-from copia_persona;
-
-
-select concat(pe.nombre,' ',pe.apellidos)as fullname,dep.nombre,prov.nombre,pro.tipoProy
-from persona as pe
-         inner join detalle_proyecto det on pe.id_per = det.id_per
-         inner join proyecto pro on det.id_proy = pro.id_proy
-         inner join departamento dep on pe.id_dep = dep.id_dep
-         inner join provincia prov on dep.id_dep = prov.id_dep;
-
-
-create or replace view ConsultaGeneral as
-select concat(pe.nombre,' ',pe.apellidos)as fullname,dep.nombre as departamento,prov.nombre as provincia,pro.tipoProy as tipo
-from persona as pe
-         inner join detalle_proyecto det on pe.id_per = det.id_per
-         inner join proyecto pro on det.id_proy = pro.id_proy
-         inner join departamento dep on pe.id_dep = dep.id_dep
-         inner join provincia prov on dep.id_dep = prov.id_dep;
-
-select * from ConsultaGeneral;
+select DiccionarioDias('WENDNESDAY')
